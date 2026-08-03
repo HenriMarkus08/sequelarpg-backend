@@ -14,7 +14,7 @@ public class Campaign {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String roomCode; // Ex: "STRADH-9821"
+    private String roomCode;
 
     private String campaignName;
 
