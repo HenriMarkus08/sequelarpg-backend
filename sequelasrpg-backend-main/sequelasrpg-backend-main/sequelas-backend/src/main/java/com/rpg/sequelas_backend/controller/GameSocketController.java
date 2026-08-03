@@ -1,4 +1,4 @@
-package com.rpg.sequelasbackend.controller;
+package com.rpg.sequelas_backend.controller;
 
 import com.rpg.sequelasbackend.dto.GameActionMessage;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
