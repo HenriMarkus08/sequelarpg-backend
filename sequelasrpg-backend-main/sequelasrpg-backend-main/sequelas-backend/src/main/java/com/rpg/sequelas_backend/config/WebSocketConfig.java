@@ -1,4 +1,4 @@
-package com.rpg.sequelasbackend.config;
+package com.rpg.sequelas_backend.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
