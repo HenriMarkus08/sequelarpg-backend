@@ -1,6 +1,6 @@
 package com.rpg.sequelas_backend.repository;
 
-import com.rpg.sequelasbackend.model.Campaign;
+import com.rpg.sequelas_backend.model.Campaign;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
