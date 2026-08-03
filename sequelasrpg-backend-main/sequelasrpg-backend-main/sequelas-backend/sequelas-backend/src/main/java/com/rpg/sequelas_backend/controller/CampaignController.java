@@ -1,40 +1,43 @@
-package com.rpg.sequelasbackend.controller;
+package com.rpg.sequelas_backend.controller;
 
-import com.rpg.sequelasbackend.model.Campaign;
-import com.rpg.sequelasbackend.repository.CampaignRepository;
+import com.rpg.sequelas_backend.model.Campaign;
+import com.rpg.sequelas_backend.repository.CampaignRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/campaigns")
-@CrossOrigin(origins = "*") // Permite chamadas de qualquer frontend (como Netlify ou localhost)
+@RequestMapping("/campaigns")
+@CrossOrigin(origins = "*")
 public class CampaignController {
 
     @Autowired
     private CampaignRepository campaignRepository;
 
-    // Criar uma nova sala com código único
-    @PostMapping("/create")
-    public ResponseEntity createCampaign(@RequestParam String name) {
-        Campaign campaign = new Campaign();
-        campaign.setCampaignName(name);
-        
-        // Gera um código único simples de 6 caracteres em maiúsculas (ex: A1B2C3)
-        String code = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        campaign.setRoomCode(code);
-        
-        Campaign saved = campaignRepository.save(campaign);
-        return ResponseEntity.ok(saved);
+    @GetMapping
+    public ResponseEntity<List<Campaign>> getAllCampaigns() {
+        List<Campaign> campaigns = campaignRepository.findAll();
+        return ResponseEntity.ok(campaigns);
     }
 
-    // Buscar dados de uma sala existente pelo código
-    @GetMapping("/{code}")
-    public ResponseEntity getCampaign(@PathVariable String code) {
-        return campaignRepository.findByRoomCode(code.toUpperCase())
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PostMapping
+    public ResponseEntity<Campaign> createCampaign(@RequestBody Campaign campaign) {
+        Campaign newCampaign = campaignRepository.save(campaign);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newCampaign);
+    }
+
+    @GetMapping("/{roomCode}")
+    public ResponseEntity<Campaign> getCampaignByRoomCode(@PathVariable String roomCode) {
+        Optional<Campaign> campaign = campaignRepository.findByRoomCode(roomCode);
+        
+        if (campaign.isPresent()) {
+            return ResponseEntity.ok(campaign.get());
+        }
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }
