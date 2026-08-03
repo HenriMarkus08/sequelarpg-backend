@@ -1,13 +1,12 @@
-package com.rpg.sequelas_backend;
+package com.rpg.sequelas_backend.repository;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.rpg.sequelas_backend.model.Campaign;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@SpringBootApplication
-public class SequelasBackendApplication {
+import java.util.Optional;
 
-	public static void main(String[] args) {
-		SpringApplication.run(SequelasBackendApplication.class, args);
-	}
-
+@Repository
+public interface CampaignRepository extends JpaRepository<Campaign, Long> {
+    Optional<Campaign> findByRoomCode(String roomCode);
 }
