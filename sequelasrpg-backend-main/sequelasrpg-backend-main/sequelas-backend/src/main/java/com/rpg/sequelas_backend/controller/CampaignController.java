@@ -1,7 +1,7 @@
 package com.rpg.sequelas_backend.controller;
 
-import com.rpg.sequelasbackend.model.Campaign;
-import com.rpg.sequelasbackend.repository.CampaignRepository;
+import com.rpg.sequelas_backend.model.Campaign;
+import com.rpg.sequelas_backend.repository.CampaignRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
