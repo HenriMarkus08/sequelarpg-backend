@@ -1,4 +1,4 @@
-package com.rpg.sequelasbackend.model;
+package com.rpg.sequelas_backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
