@@ -1,72 +1,74 @@
-package com.rpg.sequelasbackend.controller;
+package com.rpg.sequelas_backend.controller;
 
-import com.rpg.sequelasbackend.dto.GameActionMessage;
-import com.rpg.sequelasbackend.dto.ParticipantDto;
+import com.rpg.sequelas_backend.dto.GameActionMessage;
+import com.rpg.sequelas_backend.dto.ParticipantDto;
+import com.rpg.sequelas_backend.model.Participant;
+import com.rpg.sequelas_backend.repository.ParticipantRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 public class GameSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
-    
-    // Armazena participantes por sala: roomCode -> lista de participantes
-    private final Map<String, Map<String, ParticipantDto>> roomParticipants = new ConcurrentHashMap<>();
+    private final ParticipantRepository participantRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public GameSocketController(SimpMessagingTemplate messagingTemplate) {
+    public GameSocketController(SimpMessagingTemplate messagingTemplate, ParticipantRepository participantRepository) {
         this.messagingTemplate = messagingTemplate;
+        this.participantRepository = participantRepository;
     }
 
     @MessageMapping("/room/{roomCode}/action")
-    public void handleAction(@DestinationVariable String roomCode, GameActionMessage message) {
+    public void handleAction(@DestinationVariable String roomCode, GameActionMessage message) throws Exception {
         String type = message.getType();
-        String sender = message.getSender();
 
-        // Processa registro ou atualização de participante
         if ("REGISTER".equals(type) || "UPDATE_PARTICIPANT".equals(type)) {
-            // Extrai dados do payloadJson
-            ParticipantDto participant = parseParticipant(message.getPayloadJson());
-            if (participant != null) {
-                // Adiciona ou atualiza na lista da sala
-                Map<String, ParticipantDto> participants = roomParticipants.computeIfAbsent(roomCode, k -> new ConcurrentHashMap<>());
-                participants.put(sender, participant);
-                // Envia a lista atualizada para todos na sala
-                broadcastParticipantList(roomCode);
-            }
+            ParticipantDto dto = objectMapper.readValue(message.getPayloadJson(), ParticipantDto.class);
+            
+            Participant participant = participantRepository
+                    .findByRoomCodeAndUsername(roomCode, dto.getUsername())
+                    .orElse(new Participant());
+            
+            participant.setRoomCode(roomCode);
+            participant.setUsername(dto.getUsername());
+            participant.setCharacterName(dto.getCharacterName());
+            participant.setHpCurrent(dto.getHpCurrent());
+            participant.setHpMax(dto.getHpMax());
+            participant.setCa(dto.getCa());
+            participant.setLastUpdate(System.currentTimeMillis());
+            
+            participantRepository.save(participant);
+            
+            broadcastParticipantList(roomCode);
         } else {
-            // Para outros tipos de mensagem (HP_UPDATE, CHAT_LOG, etc), apenas retransmite
             messagingTemplate.convertAndSend("/topic/room/" + roomCode, message);
         }
     }
 
-    // Envia a lista de participantes para todos inscritos na sala
     private void broadcastParticipantList(String roomCode) {
-        Map<String, ParticipantDto> participantsMap = roomParticipants.getOrDefault(roomCode, new ConcurrentHashMap<>());
-        List<ParticipantDto> participantList = new ArrayList<>(participantsMap.values());
+        List<Participant> participants = participantRepository.findByRoomCode(roomCode);
+        List<ParticipantDto> dtos = participants.stream()
+                .map(p -> new ParticipantDto(
+                        p.getUsername(),
+                        p.getCharacterName(),
+                        p.getHpCurrent(),
+                        p.getHpMax(),
+                        p.getCa()
+                ))
+                .collect(Collectors.toList());
 
         GameActionMessage listMessage = new GameActionMessage();
         listMessage.setType("PARTICIPANT_LIST");
         listMessage.setSender("SERVIDOR");
-        listMessage.setParticipants(participantList);
+        listMessage.setParticipants(dtos);
 
         messagingTemplate.convertAndSend("/topic/room/" + roomCode, listMessage);
-    }
-
-    // Método auxiliar para converter JSON em ParticipantDto
-    private ParticipantDto parseParticipant(String json) {
-        try {
-            // Usando Jackson para parse (Spring já tem)
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            return mapper.readValue(json, ParticipantDto.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 }
