@@ -1,4 +1,4 @@
-package com.rpg.sequelasbackend.dto;
+package com.rpg.sequelas_backend.dto;
 
 import lombok.Data;
 
