@@ -1,4 +1,4 @@
-package com.rpg.sequelasbackend.controller;
+package com.rpg.sequelas_backend.controller;
 
 import com.rpg.sequelasbackend.model.Campaign;
 import com.rpg.sequelasbackend.repository.CampaignRepository;
