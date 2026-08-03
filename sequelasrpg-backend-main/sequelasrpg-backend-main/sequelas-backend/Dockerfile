@@ -2,8 +2,8 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY . .
-RUN chmod +x mvnw
-RUN ./mvnw clean package -DskipTests
+# Usa o Maven instalado diretamente na imagem, sem precisar do wrapper
+RUN mvn clean package -DskipTests
 
 # 2. Etapa de Execução (Runtime)
 FROM eclipse-temurin:17-jre
